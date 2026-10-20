@@ -8,8 +8,8 @@
 const { getStore } = require('@netlify/blobs');
 const crypto = require('crypto');
 
-const OWNER_PASS   = process.env.OWNER_PASS || '';
-const OWNER_SECRET = process.env.OWNER_SECRET || '';
+const OWNER_PASS = (process.env.OWNER_PASS || '').trim();
+const OWNER_SECRET = (process.env.OWNER_SECRET || '').trim();
 const STORE_NAME   = 'am-keys';
 const PREFIX       = 'am-premium:';
 
