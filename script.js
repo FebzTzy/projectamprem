@@ -17,7 +17,7 @@ const TOKEN_STORE = 'am_premium_token_v1';
 const TRIAL_LIMIT = 3;
 const STORAGE_KEY = 'am_trial_state_v1';
 const WA_NUMBER   = '6289679137206';
-const WA_MESSAGE  = 'Halo kak, saya ingin beli Kode Unlimited / Bulk Key.';
+const WA_MESSAGE  = 'Halo kak,, saya ingin beli Kode Unlimited / Bulk Key.';
 
 // State Global
 let isBulkUnlocked = false;
