@@ -20,18 +20,18 @@
   <h2><i class="fas fa-video"></i> Alight Motion Premium</h2>
   <p class="desc">Aktifkan premium Alight Motion melalui verifikasi email & magic link.</p>
 
-  <!-- TRIAL PROGRESS BAR -->
+  <!-- TRIAL PROGRESS BAR (FITUR ATAS) -->
   <div class="trial-bar" id="trialBar">
     <div class="trial-bar-top">
       <span>Trial tersisa</span>
-      <strong id="trialCount">5 / 5</strong>
+      <strong id="trialCount">3 / 3</strong>
     </div>
     <div class="trial-track">
       <div class="trial-fill" id="trialFill" style="width:100%"></div>
     </div>
   </div>
 
-  <!-- STEP 1 -->
+  <!-- STEP 1: CREATE AM PREM -->
   <div id="step1">
     <div class="form-group">
       <label>Email <span style="color:#ef4444;">*</span></label>
@@ -44,7 +44,7 @@
     <div id="amSendResult" class="result-box" style="display:none;"></div>
   </div>
 
-  <!-- STEP 2 -->
+  <!-- STEP 2: VERIFY MAGIC LINK -->
   <div id="step2" class="step" style="display:none;">
     <div class="form-group">
       <label>Raw Magic Link <span style="color:#ef4444;">*</span></label>
@@ -57,57 +57,55 @@
     <div id="amVerifyResult" class="result-box" style="display:none;"></div>
   </div>
 
-  <!-- BULK GENERATOR (PREMIUM) -->
-  <div class="step" id="bulkSection" style="margin-top:14px;">
-    <div class="form-group">
-      <label>Bulk Generate Akun <span style="color:#ef4444;">*</span></label>
-      <div class="v-input-wrap">
-        <input type="number" id="bulkCount" class="v-input" value="1" min="1" max="50" placeholder="Jumlah (1–50)">
-        <i class="fas fa-layer-group field-icon"></i>
-      </div>
-    </div>
-    <button class="v-btn" id="bulkBtn">
-      <i class="fas fa-boxes-stacked"></i> Generate Bulk
-    </button>
-    <div id="bulkResult" class="result-box" style="display:none;"></div>
-
-    <div class="form-group" id="bulkTokenBox" style="display:none; margin-top:10px;">
-      <label>Premium Token</label>
-      <div class="v-input-wrap">
-        <input type="text" id="bulkTokenInput" class="v-input" placeholder="Tempelkan token premium">
-        <i class="fas fa-key field-icon"></i>
-      </div>
-      <button class="v-btn secondary" id="bulkTokenApply" style="margin-top:8px;">
-        <i class="fas fa-unlock"></i> Terapkan Token
-      </button>
-    </div>
-  </div>
-
-  <!-- UNLOCK PANEL -->
+  <!-- UNLOCK PANEL (FITUR ATAS JIKA TRIAL HABIS) -->
   <div class="unlock-panel" id="unlockPanel">
     <div class="lock-icon"><i class="fas fa-lock"></i></div>
     <div class="unlock-title">Trial Habis</div>
     <div class="unlock-sub">
       Anda sudah menggunakan <b style="color:#fbbf24;" id="unlockTrialText">3x akses trial</b>.<br>
-      Beli kode akses dari owner untuk membuka <b>unlimited access</b>.
+      Beli kode akses dari owner untuk membuka unlimited fitur ini.
     </div>
-
-    <!-- Tombol beli via WhatsApp -->
     <div class="price-tag"><i class="fas fa-tag"></i> Beli Kode Unlimited</div>
-    <button class="v-btn wa" id="buyWaBtn">
-      <i class="fab fa-whatsapp"></i> Beli Kode via WhatsApp
-    </button>
-
+    <button class="v-btn wa" id="buyWaBtn"><i class="fab fa-whatsapp"></i> Beli Kode via WhatsApp</button>
     <div class="divider">atau sudah punya kode</div>
-
     <div class="form-group" style="margin-top:10px; margin-bottom:10px;">
       <div class="v-input-wrap">
-        <input type="text" id="unlockCode" class="v-input" placeholder="Masukkan kode akses owner">
+        <input type="text" id="unlockCode" class="v-input" placeholder="Masukkan kode owner">
         <i class="fas fa-key field-icon"></i>
       </div>
     </div>
     <button class="v-btn secondary" id="unlockBtn"><i class="fas fa-unlock"></i> Aktivasi Kode</button>
     <div id="unlockResult" class="result-box" style="display:none; background:rgba(251,191,36,0.06); border-color:rgba(251,191,36,0.3);"></div>
+  </div>
+
+  <!-- BULK GENERATOR (FITUR BAWAH - WAJIB KEY DARI AWAL) -->
+  <div class="step" id="bulkSection" style="margin-top:24px; padding-top:20px; border-top:1px dashed rgba(59,130,246,0.3);">
+    
+    <!-- Kotak Input Key Bulk (Selalu Tampil) -->
+    <div class="form-group" id="bulkTokenBox" style="margin-bottom: 15px;">
+      <label style="color:#fbbf24;"><i class="fas fa-key"></i> Bulk Key (Wajib)</label>
+      <div class="v-input-wrap">
+        <input type="text" id="bulkTokenInput" class="v-input" placeholder="Tempelkan key bulk dari owner">
+        <i class="fas fa-key field-icon"></i>
+      </div>
+      <button class="v-btn secondary" id="bulkTokenApply" style="margin-top:8px;">
+        <i class="fas fa-unlock"></i> Terapkan Key Bulk
+      </button>
+    </div>
+
+    <!-- Form Bulk (Terkunci Sebelum Key Valid) -->
+    <div class="form-group">
+      <label>Bulk Generate Akun <span style="color:#ef4444;">*</span></label>
+      <div class="v-input-wrap">
+        <input type="number" id="bulkCount" class="v-input" value="1" min="1" max="50" placeholder="Jumlah (1–50)" disabled>
+        <i class="fas fa-layer-group field-icon"></i>
+      </div>
+    </div>
+    
+    <button class="v-btn" id="bulkBtn" disabled style="opacity: 0.5; cursor: not-allowed; background: #333;">
+      <i class="fas fa-lock"></i> Fitur Terkunci (Butuh Key)
+    </button>
+    <div id="bulkResult" class="result-box" style="display:none;"></div>
   </div>
 
   <!-- SUCCESS SCREEN -->
@@ -120,7 +118,6 @@
 </div>
 
 <div class="toast" id="toast"></div>
-
 <script src="script.js"></script>
 </body>
 </html>
