@@ -316,78 +316,58 @@ const bulkBtn    = document.getElementById('bulkBtn');
 const bulkResult = document.getElementById('bulkResult');
 
 function renderBulkResult(data) {
-  if (!data) return '<div style="color:#ef4444;">Kosong</div>';
+  // Validasi data kosong
+  if (!data) return '<div style="color:#ef4444;">Data kosong / tidak valid.</div>';
 
-  const list =
-    Array.isArray(data)                     ? data :
-    Array.isArray(data.emails)              ? data.emails :
-    Array.isArray(data.results)             ? data.results :
-    Array.isArray(data.data)                ? data.data :
-    Array.isArray(data.items)               ? data.items :
-    null;
+  // Ambil array results dari response (kalau ada)
+  const list = data.results || data.data || data.items || (Array.isArray(data) ? data : null);
 
-  if (list) {
-    const rows = list.map((it, i) => {
-      if (typeof it === 'string') return `${i + 1}. ${it}`;
-      const em = it.email || it.mail || it.address || it.user || JSON.stringify(it);
-      const st = it.status || it.state || '';
-      return `${i + 1}. ${em}${st ? ' — ' + st : ''}`;
-    }).join('\n');
-    return `<div style="text-align:left; white-space:pre-wrap; font-family:monospace; font-size:11px;">${rows}</div>`;
+  // Kalau ternyata nggak ada array-nya, tampilkan raw JSON
+  if (!list || !Array.isArray(list)) {
+    const raw = data.raw || JSON.stringify(data, null, 2);
+    return `<div style="text-align:left; white-space:pre-wrap; font-family:monospace; font-size:11px; padding:8px; background:rgba(0,0,0,0.3); border-radius:6px;">${String(raw).slice(0, 4000)}</div>`;
   }
 
-  const raw = data.raw || JSON.stringify(data, null, 2);
-  return `<div style="text-align:left; white-space:pre-wrap; font-family:monospace; font-size:11px;">${String(raw).slice(0, 4000)}</div>`;
+  // Header info (sukses/gagal)
+  let html = `<div style="text-align:left; margin-bottom:10px; font-size:12px; color:#8b98b5;">
+    <span style="color:#22c55e; font-weight:bold;">Sukses: ${data.sukses || 0}</span> | 
+    <span style="color:#ef4444; font-weight:bold;">Gagal: ${data.gagal || 0}</span> 
+    <span style="float:right;">Total: ${data.total || list.length}</span>
+  </div>`;
+
+  // Loop bikin kartu per akun
+  html += '<div style="display:flex; flex-direction:column; gap:8px;">';
+  
+  list.forEach((item, index) => {
+    // Default value kalau field-nya ga ada
+    const email = item.email || item.mail || '-';
+    const inbox = item.inbox || '#';
+    const uid = item.uid || '-';
+    const status = item.status || (item.success ? 'Active' : 'Failed');
+    
+    // Cek status sukses/gagal
+    const isSuccess = item.success === true || /active|success|sukses/i.test(status);
+    const color = isSuccess ? '#22c55e' : '#ef4444';
+    const bg = isSuccess ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)';
+    const border = isSuccess ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)';
+
+    html += `
+      <div style="text-align:left; background:${bg}; border:1px solid ${border}; border-radius:8px; padding:10px; font-size:11px; font-family:monospace;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+          <b style="color:#eef4ff;">#${item.no || index + 1}</b>
+          <span style="color:${color}; font-weight:bold;">${status.toUpperCase()}</span>
+        </div>
+        <div style="color:#8b98b5; margin-bottom:4px;">Email: <span style="color:#eef4ff;">${email}</span></div>
+        <div style="color:#8b98b5; margin-bottom:8px;">UID: <span style="color:#eef4ff;">${uid}</span></div>
+        
+        ${inbox !== '#' ? `<a href="${inbox}" target="_blank" style="display:inline-block; background:${color}; color:#0a0f1c; text-decoration:none; padding:5px 10px; border-radius:4px; font-weight:bold; font-family:sans-serif;">Buka Inbox</a>` : ''}
+      </div>
+    `;
+  });
+  
+  html += '</div>';
+  return html;
 }
-
-function fmtRemain(ms) {
-  if (!ms || ms <= 0) return '';
-  const d = Math.floor(ms / 86400000);
-  const h = Math.floor((ms % 86400000) / 3600000);
-  const m = Math.floor((ms % 3600000) / 60000);
-  if (d > 0) return `${d}h ${h}j left`;
-  if (h > 0) return `${h}j ${m}m left`;
-  return `${m}m left`;
-}
-
-bulkBtn.onclick = async function() {
-  const n = parseInt(bulkInput.value, 10);
-  if (!Number.isFinite(n) || n < 1 || n > 50) {
-    showToast('Jumlah 1–50');
-    return;
-  }
-
-  const tok = getPremiumToken();
-  if (!tok) {
-    bulkResult.style.display = 'block';
-    bulkResult.innerHTML = '<div style="color:#fbbf24;">🔒 Bulk hanya untuk premium. Masukkan token di bawah.</div>';
-    document.getElementById('bulkTokenBox').style.display = 'block';
-    return;
-  }
-
-  this.disabled = true;
-  const original = this.innerHTML;
-  this.innerHTML = '<i class="fas fa-spinner spin"></i> Generate...';
-  bulkResult.style.display = 'block';
-  bulkResult.innerHTML = '<div><i class="fas fa-spinner spin"></i> Meminta ' + n + ' akun...</div>';
-
-  try {
-    const out = await bulkGenerate(n);
-    const remain = fmtRemain(out.remainingMs);
-    bulkResult.innerHTML =
-      '<div style="color:#22c55e; margin-bottom:8px;">✅ Bulk selesai (count=' + n + ') ' + remain + '</div>'
-      + renderBulkResult(out.payload);
-  } catch (e) {
-    bulkResult.innerHTML = '<div style="color:#ef4444;">Error: ' + e.message + '</div>';
-    if (/expired|revoked|invalid|token/i.test(e.message)) {
-      setPremiumToken('');
-      document.getElementById('bulkTokenBox').style.display = 'block';
-    }
-  }
-
-  this.disabled = false;
-  this.innerHTML = original;
-};
 
 /* Token apply */
 document.getElementById('bulkTokenApply').onclick = async function() {
