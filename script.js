@@ -302,11 +302,12 @@ function fmtRemain(ms) {
   const d = Math.floor(ms / 86400000);
   const h = Math.floor((ms % 86400000) / 3600000);
   const m = Math.floor((ms % 3600000) / 60000);
-  if (d > 0) return `${d}h ${h}j left`;
-  if (h > 0) return `${h}j ${m}m left`;
-  return `${m}m left`;
+  const s = Math.floor((ms % 60000) / 1000);
+  if (d > 0) return `${d} hari ${h} jam`;
+  if (h > 0) return `${h} jam ${m} mnt`;
+  if (m > 0) return `${m} mnt ${s} dtk`;
+  return `${s} detik`; // Tampil dalam detik jika di bawah 1 menit
 }
-
 function updateBulkUI(unlocked) {
   isBulkUnlocked = unlocked;
   if (unlocked) {
