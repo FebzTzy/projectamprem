@@ -76,10 +76,18 @@ async function apiGet(url) {
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { count: 0, unlocked: false };
+    if (!raw) return { count: 0, unlocked: false, magicExpiry: 0 };
     const s = JSON.parse(raw);
-    return { count: Math.max(0, parseInt(s.count) || 0), unlocked: !!s.unlocked };
-  } catch { return { count: 0, unlocked: false }; }
+    let unlocked = !!s.unlocked;
+    let magicExpiry = s.magicExpiry || 0;
+
+    // Kalau waktu key sudah habis, otomatis kunci lagi
+    if (unlocked && magicExpiry > 0 && Date.now() > magicExpiry) {
+        unlocked = false;
+        magicExpiry = 0;
+    }
+    return { count: Math.max(0, parseInt(s.count) || 0), unlocked: unlocked, magicExpiry: magicExpiry };
+  } catch { return { count: 0, unlocked: false, magicExpiry: 0 }; }
 }
 function saveState(state) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {} }
 
@@ -93,12 +101,26 @@ const unlockTrialText = document.getElementById('unlockTrialText');
 function renderTrial() {
   if (trialState.unlocked) {
     trialBadge.className = 'badge-vip';
-    trialBadge.innerHTML = '<i class="fas fa-crown"></i> UNLIMITED';
+    
+    // Tampilkan sisa waktu (menit/detik) di badge, bukan tulisan UNLIMITED
+    if (trialState.magicExpiry > 0) {
+       const remain = fmtRemain(trialState.magicExpiry - Date.now());
+       trialBadge.innerHTML = '<i class="fas fa-crown"></i> ' + (remain ? remain.toUpperCase() : 'PREMIUM');
+    } else {
+       trialBadge.innerHTML = '<i class="fas fa-crown"></i> PREMIUM';
+    }
+
     trialBar.style.display = 'none';
     unlockPanel.classList.remove('show');
     document.getElementById('step1').style.display = 'block';
     return;
   }
+
+  // ... (Biarkan sisa kode di bawah ini sama persis seperti aslinya)
+  const used = trialState.count;
+  const left = Math.max(0, TRIAL_LIMIT - used);
+  // ... (sampai akhir fungsi)
+}
 
   const used = trialState.count;
   const left = Math.max(0, TRIAL_LIMIT - used);
@@ -251,17 +273,23 @@ document.getElementById('unlockBtn').onclick = async function() {
   const v = await validatePremium(code, 'premium_magic');
 
   if (v.valid) {
-    trialState.unlocked = true;
-    saveState(trialState);
-    res.innerHTML = '<div style="color:#22c55e;">🎉 Kode valid! Unlimited access fitur atas terbuka.</div>';
-    showToast('Unlimited access aktif!');
-    setTimeout(() => {
-      renderTrial();
-      document.getElementById('step1').style.display = 'block';
-      document.getElementById('step2').style.display = 'none';
-      document.getElementById('unlockCode').value = '';
-      res.style.display = 'none';
-    }, 900);
+  trialState.unlocked = true;
+  trialState.magicExpiry = v.expiresAt || 0; // <--- SIMPAN WAKTU EXPIRED DARI SERVER
+  saveState(trialState);
+  
+  // Tampilkan pesan sukses
+  const remain = fmtRemain(trialState.magicExpiry - Date.now());
+  res.innerHTML = '<div style="color:#22c55e;">🎉 Kode valid! Akses terbuka ' + remain + '.</div>';
+  showToast('Akses dibuka!');
+  
+  setTimeout(() => {
+    renderTrial(); // Ini bakal nampilin sisa waktu di badge atas
+    document.getElementById('step1').style.display = 'block';
+    document.getElementById('step2').style.display = 'none';
+    document.getElementById('unlockCode').value = '';
+    res.style.display = 'none';
+  }, 900);
+} else {
   } else {
     res.innerHTML = '<div style="color:#ef4444;">❌ ' + (v.error || 'Kode salah/expired.') + '</div>';
     showToast('Kode tidak valid');
