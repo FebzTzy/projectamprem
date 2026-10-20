@@ -5,7 +5,7 @@
 
 const { getStore } = require('@netlify/blobs');
 
-const OWNER_SECRET = process.env.OWNER_SECRET || ''; // rahasia pembuat token
+const OWNER_SECRET = (process.env.OWNER_SECRET || '').trim(); // rahasia pembuat token
 const KEY_PREFIX   = 'am-premium:';
 const STORE_NAME   = 'am-keys';
 
