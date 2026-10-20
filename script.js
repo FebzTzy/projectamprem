@@ -27,7 +27,7 @@ const EP = {
    =========================================== */
 // ⬇️⬇️⬇️ GANTI BARIS DI BAWAH KE URL NETLIFY LO ⬇️⬇️⬇️
 // Contoh: 'https://alight-premium.netlify.app/.netlify/functions'
-const PREMIUM_API = 'https://YOUR-SITE.netlify.app/.netlify/functions';
+const PREMIUM_API = 'https://febztzy-amprem.netlify.app/.netlify/functions';
 
 const TOKEN_STORE = 'am_premium_token_v1';
 
