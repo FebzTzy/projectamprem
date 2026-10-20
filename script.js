@@ -9,7 +9,7 @@ const STORAGE_KEY = 'am_trial_state_v1';
    📱 WHATSAPP OWNER
    =========================================== */
 const WA_NUMBER  = '6289679137206';
-const WA_MESSAGE = 'Halo kak, saya ingin beli kode Unlimited Access untuk Alight Motion Premium. Mohon info harga & cara pembayarannya 🙏';
+const WA_MESSAGE = 'Halo kak,, saya ingin beli kode Unlimited Access untuk Alight Motion Premium. Mohon info harga & cara pembayarannya 🙏';
 
 /* ===========================================
    ⚙️ API KYZOROHAN (send + verif)
