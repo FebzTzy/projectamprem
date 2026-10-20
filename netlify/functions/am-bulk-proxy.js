@@ -3,7 +3,7 @@
 // Verifikasi token dulu, baru panggil am-bulk. Client tidak pernah lihat API key.
 
 const { getStore } = require('@netlify/blobs');
-const OWNER_SECRET = process.env.OWNER_SECRET || '';
+const OWNER_SECRET = (process.env.OWNER_SECRET || '').trim();
 const KY_KEY       = process.env.KYZ_KEY; // simpan di Netlify env, JANGAN di client
 const KY_BASE      = 'https://kyzorohan.web.id/api';
 const KEY_PREFIX   = 'am-premium:';
