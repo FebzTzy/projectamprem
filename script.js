@@ -512,24 +512,60 @@ function renderBulkResult(data) {
   html += '</div>';
   return html;
 }
+// State & Fungsi untuk Buka/Kunci UI Bulk
+let isBulkUnlocked = false;
+const bulkInput = document.getElementById('bulkCount');
+const bulkBtn = document.getElementById('bulkBtn');
 
+function updateBulkUI(unlocked) {
+  isBulkUnlocked = unlocked;
+  if (unlocked) {
+    bulkBtn.disabled = false;
+    bulkBtn.style.opacity = 1;
+    bulkBtn.style.cursor = 'pointer';
+    bulkBtn.style.background = 'linear-gradient(135deg,#3b82f6,#1d4ed8)';
+    bulkBtn.innerHTML = '<i class="fas fa-boxes-stacked"></i> Generate Bulk';
+    bulkInput.disabled = false;
+    document.getElementById('bulkTokenBox').style.display = 'none';
+  } else {
+    bulkBtn.disabled = true;
+    bulkBtn.style.opacity = 0.5;
+    bulkBtn.style.cursor = 'not-allowed';
+    bulkBtn.style.background = '#333';
+    bulkBtn.innerHTML = '<i class="fas fa-lock"></i> Fitur Terkunci (Butuh Key)';
+    bulkInput.disabled = true;
+    document.getElementById('bulkTokenBox').style.display = 'block';
+  }
+}
 /* Token apply */
 document.getElementById('bulkTokenApply').onclick = async function() {
   const inp = document.getElementById('bulkTokenInput');
   const tok = inp.value.trim();
-  if (!tok) { showToast('Token kosong'); return; }
+  if (!tok) { alert('Key kosong!'); return; }
 
-  setPremiumToken(tok);
-  const v = await validatePremium();
-  if (v.valid) {
-    const remain = fmtRemain(v.remainingMs);
-    showToast('Token valid — ' + (v.plan || 'premium') + ' ' + remain);
-    document.getElementById('bulkTokenBox').style.display = 'none';
-    inp.value = '';
-  } else {
-    setPremiumToken('');
-    showToast(v.error || 'Token tidak valid');
+  this.disabled = true;
+  this.innerHTML = '<i class="fas fa-spinner spin"></i> Cek Key...';
+
+  try {
+    setPremiumToken(tok);
+    // Wajib cek 'premium_bulk' biar key fitur atas gabisa dipake disini
+    const v = await validatePremium(tok, 'premium_bulk');
+    
+    if (v.valid) {
+      const remain = fmtRemain(v.remainingMs);
+      updateBulkUI(true); // <-- INI YANG BIKIN TOMBOLNYA NYALA
+      alert('SUKSES! Bulk Key Valid: ' + remain);
+    } else {
+      setPremiumToken('');
+      updateBulkUI(false);
+      alert('GAGAL: ' + (v.error || 'Key tidak valid / salah tipe'));
+    }
+  } catch (err) {
+    alert('ERROR SISTEM: ' + err.message);
   }
+
+  this.disabled = false;
+  this.innerHTML = '<i class="fas fa-unlock"></i> Terapkan Key Bulk';
 };
 
 /* ===========================================
