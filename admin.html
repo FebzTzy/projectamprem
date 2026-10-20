@@ -2,133 +2,170 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>AM Owner — Key Manager</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Owner - Key Generator</title>
 <style>
-  body{font-family:system-ui,sans-serif;background:#0a0f1c;color:#eef4ff;padding:24px;max-width:820px;margin:auto}
-  h1{font-size:18px;margin-bottom:8px}
-  h2{font-size:14px;margin:24px 0 10px;color:#60a5fa}
-  label{display:block;font-size:11px;color:#8b98b5;margin:8px 0 4px;text-transform:uppercase;letter-spacing:.6px}
-  input,select,button{font-family:inherit;font-size:13px}
-  input,select{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(59,130,246,.3);background:rgba(59,130,246,.06);color:#eef4ff}
-  button{padding:10px 16px;border:none;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;font-weight:700;cursor:pointer;margin-top:10px}
-  button.secondary{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#3a2600}
-  button.danger{background:linear-gradient(135deg,#ef4444,#b91c1c)}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .result{margin-top:16px;padding:12px;border-radius:10px;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.25);word-break:break-all;font-family:monospace;font-size:11px;white-space:pre-wrap}
-  table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
-  th,td{padding:8px;text-align:left;border-bottom:1px solid rgba(59,130,246,.15)}
-  th{color:#8b98b5;font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.6px}
-  code{font-family:monospace;font-size:11px}
-  .copy{background:none;border:1px solid rgba(59,130,246,.3);padding:4px 8px;border-radius:6px;color:#60a5fa;font-size:10px;cursor:pointer}
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+  body {
+    background: #090f1e; color: #eef4ff; display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; padding: 20px;
+    background-image: radial-gradient(circle at top right, rgba(59,130,246,0.15), transparent 40%),
+                      radial-gradient(circle at bottom left, rgba(34,211,238,0.1), transparent 40%);
+  }
+  .card {
+    background: rgba(15, 25, 45, 0.8); backdrop-filter: blur(12px);
+    border: 1px solid rgba(59,130,246,0.3); border-radius: 16px;
+    padding: 30px; width: 100%; max-width: 480px; /* Agak dilebarin dikit */
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  }
+  h2 { text-align: center; color: #60a5fa; margin-bottom: 20px; font-size: 20px; }
+  .form-group { margin-bottom: 15px; }
+  label { display: block; font-size: 12px; color: #8b98b5; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+  input, select {
+    width: 100%; padding: 12px; background: rgba(59,130,246,0.08);
+    border: 1px solid rgba(59,130,246,0.3); border-radius: 8px;
+    color: #eef4ff; font-size: 14px; outline: none; transition: 0.2s;
+  }
+  input:focus, select:focus { border-color: #60a5fa; background: rgba(59,130,246,0.15); }
+  select option { background: #090f1e; color: #eef4ff; }
+  .row { display: flex; gap: 10px; }
+  .row .form-group { flex: 1; }
+  button {
+    width: 100%; padding: 14px; margin-top: 15px; border: none; border-radius: 8px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff;
+    font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.3s;
+    box-shadow: 0 4px 15px rgba(59,130,246,0.4);
+  }
+  button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(59,130,246,0.6); }
+  .result-box {
+    margin-top: 20px; padding: 15px; background: rgba(34,197,94,0.1);
+    border: 1px solid rgba(34,197,94,0.3); border-radius: 8px;
+    display: none; word-break: break-all;
+  }
+  .result-box.error { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #ef4444; }
+  .token-text { font-family: monospace; font-size: 13px; color: #22c55e; margin: 10px 0; line-height: 1.5; user-select: all; }
+  .copy-btn {
+    background: #22c55e; color: #000; padding: 8px 12px; border-radius: 6px;
+    font-size: 12px; font-weight: bold; cursor: pointer; border: none; width: auto; margin-top: 5px;
+  }
+  .copy-btn:hover { background: #1ea34b; }
 </style>
 </head>
 <body>
 
-<h1>🔑 Alight Motion — Owner Key Manager</h1>
-<p style="color:#8b98b5;font-size:12px;">Buat, lihat, dan cabut token premium. Semua request ditandatangani server-side.</p>
-
-<label>Owner Password</label>
-<input type="password" id="ownerPass" placeholder="Password owner">
-
-<h2>Create Token</h2>
-<div class="row">
-  <div>
-    <label>Plan Name</label>
-    <input id="plan" value="premium">
+<div class="card">
+  <h2>🔑 Owner Key Generator</h2>
+  
+  <div class="form-group">
+    <label>Owner Password</label>
+    <input type="password" id="ownerPass" placeholder="Masukkan OWNER_PASS Netlify">
   </div>
-  <div>
-    <label>Unit</label>
-    <select id="unit">
-      <option value="second">Detik</option>
-      <option value="minute">Menit</option>
-      <option value="hour" selected>Jam</option>
-      <option value="day">Hari</option>
-      <option value="week">Minggu</option>
-      <option value="month">Bulan (30 hari)</option>
-      <option value="year">Tahun (365 hari)</option>
-      <option value="permanent">Permanen</option>
+
+  <!-- INI BAGIAN YANG DIGANTI: DROPDOWN UNTUK MEMILIH FITUR -->
+  <div class="form-group">
+    <label>Pilih Fitur (Tipe Key)</label>
+    <select id="keyType" style="font-weight: bold; color: #60a5fa;">
+      <option value="premium_magic">Fitur Atas (Magic Link / Email)</option>
+      <option value="premium_bulk">Fitur Bawah (Bulk Generate)</option>
     </select>
   </div>
-</div>
-<label>Amount</label>
-<input type="number" id="amount" value="24" min="1">
-<button id="createBtn">Generate Token</button>
-<div class="result" id="createResult" style="display:none"></div>
 
-<h2>Active Tokens</h2>
-<button id="listBtn" class="secondary">Refresh List</button>
-<div id="listTable"></div>
+  <div class="row">
+    <div class="form-group">
+      <label>Durasi Angka</label>
+      <input type="number" id="amount" value="1" min="1">
+    </div>
+    <div class="form-group">
+      <label>Satuan Waktu</label>
+      <select id="unit">
+        <option value="second">Detik</option>
+        <option value="minute">Menit</option>
+        <option value="hour" selected>Jam</option>
+        <option value="day">Hari</option>
+        <option value="week">Minggu</option>
+        <option value="month">Bulan</option>
+        <option value="year">Tahun</option>
+        <option value="permanent">Permanen</option>
+      </select>
+    </div>
+  </div>
+
+  <button id="generateBtn">Generate Key</button>
+
+  <div class="result-box" id="resultBox">
+    <div style="font-size:12px; color:#eef4ff;" id="resultDesc"></div>
+    <div class="token-text" id="tokenText"></div>
+    <button class="copy-btn" id="copyBtn">Copy Key</button>
+  </div>
+</div>
 
 <script>
-const API = '/.netlify/functions/am-admin';
-const $ = id => document.getElementById(id);
+  // Pastikan URL ini pakai domain Netlify lo
+  const API_URL = 'https://febztzy-amprem.netlify.app/.netlify/functions/am-admin';
+  
+  const btn = document.getElementById('generateBtn');
+  const box = document.getElementById('resultBox');
+  const desc = document.getElementById('resultDesc');
+  const tokenTxt = document.getElementById('tokenText');
+  const copyBtn = document.getElementById('copyBtn');
 
-async function adminCall(payload) {
-  const ownerPass = $('ownerPass').value.trim();
-  if (!ownerPass) throw new Error('Masukkan owner password dulu');
-  const r = await fetch(API, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ownerPass, ...payload })
-  });
-  const data = await r.json();
-  if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
-  return data;
-}
+  btn.onclick = async () => {
+    const ownerPass = document.getElementById('ownerPass').value.trim();
+    const amount = Number(document.getElementById('amount').value);
+    const unit = document.getElementById('unit').value;
+    const plan = document.getElementById('keyType').value;
 
-$('createBtn').onclick = async () => {
-  const res = $('createResult');
-  res.style.display = 'block';
-  res.textContent = 'Generating...';
-  try {
-    const out = await adminCall({
-      action: 'create',
-      plan:   $('plan').value.trim() || 'premium',
-      unit:   $('unit').value,
-      amount: Number($('amount').value)
-    });
-    const expDate = new Date(out.expiresAt).toLocaleString('id-ID');
-    res.textContent = `id: ${out.id}\nplan: ${out.plan}\nunit: ${out.amount} ${out.unit}\nexpiresAt: ${expDate}\n\nTOKEN:\n${out.token}`;
-  } catch (e) { res.textContent = '❌ ' + e.message; }
-};
+    if (!ownerPass) return alert('Masukkan Owner Password!');
+    if (!amount || amount < 1) return alert('Masukkan durasi yang valid!');
 
-$('listBtn').onclick = async () => {
-  const wrap = $('listTable');
-  wrap.innerHTML = 'Loading...';
-  try {
-    const out = await adminCall({ action: 'list' });
-    const rows = out.keys.map(k => {
-      const exp = new Date(k.expiresAt).toLocaleString('id-ID');
-      const expShort = k.token.slice(0, 14) + '…';
-      return `<tr>
-        <td><code>${k.id}</code></td>
-        <td>${k.plan}</td>
-        <td>${k.amount} ${k.unit}</td>
-        <td>${exp}</td>
-        <td><code>${expShort}</code> <button class="copy" data-token="${k.token}">copy</button></td>
-        <td><button class="copy danger" data-revoke="${k.id}">revoke</button></td>
-      </tr>`;
-    }).join('');
-    wrap.innerHTML = `<table>
-      <thead><tr><th>ID</th><th>Plan</th><th>Duration</th><th>Expires</th><th>Token</th><th></th></tr></thead>
-      <tbody>${rows || '<tr><td colspan="6" style="color:#8b98b5">Belum ada key</td></tr>'}</tbody>
-    </table>`;
-    wrap.querySelectorAll('button[data-token]').forEach(b => {
-      b.onclick = () => { navigator.clipboard.writeText(b.dataset.token); b.textContent = 'copied'; };
-    });
-    wrap.querySelectorAll('button[data-revoke]').forEach(b => {
-      b.onclick = async () => {
-        if (!confirm('Revoke key ' + b.dataset.revoke + '?')) return;
-        try {
-          await adminCall({ action: 'revoke', id: b.dataset.revoke });
-          b.textContent = 'revoked';
-          b.disabled = true;
-        } catch (e) { alert('❌ ' + e.message); }
-      };
-    });
-  } catch (e) { wrap.innerHTML = '❌ ' + e.message; }
-};
+    btn.disabled = true;
+    btn.textContent = 'Memproses...';
+    box.style.display = 'none';
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ownerPass: ownerPass,
+          action: 'create',
+          plan: plan, 
+          unit: unit,
+          amount: amount
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.ok) {
+        box.className = 'result-box';
+        box.style.display = 'block';
+        const expDate = new Date(data.expiresAt).toLocaleString('id-ID');
+        const fiturName = plan === 'premium_magic' ? 'Fitur Atas' : 'Fitur Bulk';
+        
+        desc.innerHTML = `Key berhasil dibuat untuk: <b style="color:#60a5fa;">${fiturName}</b><br>Expired: <b>${expDate}</b>`;
+        tokenTxt.textContent = data.token;
+        copyBtn.style.display = 'block';
+      } else {
+        throw new Error(data.error || 'Gagal generate key');
+      }
+    } catch (e) {
+      box.className = 'result-box error';
+      box.style.display = 'block';
+      desc.textContent = '❌ ' + e.message;
+      tokenTxt.textContent = '';
+      copyBtn.style.display = 'none';
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Generate Key';
+  };
+
+  copyBtn.onclick = () => {
+    navigator.clipboard.writeText(tokenTxt.textContent);
+    copyBtn.textContent = 'Tercopy!';
+    setTimeout(() => { copyBtn.textContent = 'Copy Key'; }, 2000);
+  };
 </script>
 </body>
 </html>
