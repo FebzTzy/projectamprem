@@ -1,21 +1,8 @@
 /* ===========================================
-   🔐 OWNER CONFIG
-   =========================================== */
-const OWNER_CODE  = 'ALIGHT-VIP-4065';   // kode unlock trial (bukan token premium)
-const TRIAL_LIMIT = 3;
-const STORAGE_KEY = 'am_trial_state_v1';
-
-/* ===========================================
-   📱 WHATSAPP OWNER
-   =========================================== */
-const WA_NUMBER  = '6289679137206';
-const WA_MESSAGE = 'Halo kak,, saya ingin beli kode Unlimited Access untuk Alight Motion Premium. Mohon info harga & cara pembayarannya 🙏';
-
-/* ===========================================
-   ⚙️ API KYZOROHAN (send + verif)
+   ⚙️ API KYZOROHAN
    =========================================== */
 const API_BASE = 'https://kyzorohan.web.id/api';
-const API_KEY  = '';
+const API_KEY  = 'rohana305c3bb4ca9e44c';
 
 const EP = {
   send  : (email)       => `${API_BASE}/am-send2?key=${API_KEY}&email=${encodeURIComponent(email)}`,
@@ -23,19 +10,23 @@ const EP = {
 };
 
 /* ===========================================
-   🔑 PREMIUM PROXY (Netlify Functions)
+   🔑 PREMIUM PROXY (NETLIFY)
    =========================================== */
-// ⬇️⬇️⬇️ GANTI BARIS DI BAWAH KE URL NETLIFY LO ⬇️⬇️⬇️
-// Contoh: 'https://alight-premium.netlify.app/.netlify/functions'
 const PREMIUM_API = 'https://febztzy-amprem.netlify.app/.netlify/functions';
-
 const TOKEN_STORE = 'am_premium_token_v1';
+const TRIAL_LIMIT = 3;
+const STORAGE_KEY = 'am_trial_state_v1';
+const WA_NUMBER   = '6289679137206';
+const WA_MESSAGE  = 'Halo kak, saya ingin beli Kode Unlimited / Bulk Key.';
 
+// State Global
+let isBulkUnlocked = false;
+
+// Helper Token
 function getPremiumToken()   { try { return localStorage.getItem(TOKEN_STORE) || ''; } catch { return ''; } }
 function setPremiumToken(t)  { try { t ? localStorage.setItem(TOKEN_STORE, t) : localStorage.removeItem(TOKEN_STORE); } catch {} }
 
-async function validatePremium() {
-  const token = getPremiumToken();
+async function validatePremium(token, requiredPlan) {
   if (!token) return { valid: false, error: 'No token' };
   try {
     const r = await fetch(`${PREMIUM_API}/am-validate`, {
@@ -43,13 +34,18 @@ async function validatePremium() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token })
     });
-    return await r.json();
+    const data = await r.json();
+    // Cek apakah plan-nya sesuai (premium_magic atau premium_bulk)
+    if (data.valid && requiredPlan && data.plan !== requiredPlan) {
+      return { valid: false, error: 'Key ini bukan untuk fitur ini.' };
+    }
+    return data;
   } catch (e) { return { valid: false, error: e.message }; }
 }
 
 async function bulkGenerate(count) {
   const token = getPremiumToken();
-  if (!token) throw new Error('Token premium belum ada');
+  if (!token) throw new Error('Bulk Key belum ada');
   const r = await fetch(`${PREMIUM_API}/am-bulk-proxy`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -68,7 +64,7 @@ async function apiGet(url) {
 }
 
 /* ===========================================
-   🗄️ TRIAL STATE
+   🗄️ TRIAL STATE & UI (FITUR ATAS)
    =========================================== */
 function loadState() {
   try {
@@ -78,14 +74,9 @@ function loadState() {
     return { count: Math.max(0, parseInt(s.count) || 0), unlocked: !!s.unlocked };
   } catch { return { count: 0, unlocked: false }; }
 }
-function saveState(state) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
-}
+function saveState(state) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {} }
 let trialState = loadState();
 
-/* ===========================================
-   🎨 TRIAL UI
-   =========================================== */
 const trialBadge      = document.getElementById('trialBadge');
 const trialBar        = document.getElementById('trialBar');
 const trialCount      = document.getElementById('trialCount');
@@ -102,6 +93,7 @@ function renderTrial() {
     document.getElementById('step1').style.display = 'block';
     return;
   }
+
   const used = trialState.count;
   const left = Math.max(0, TRIAL_LIMIT - used);
   const pct  = (left / TRIAL_LIMIT) * 100;
@@ -127,6 +119,7 @@ function renderTrial() {
     trialBadge.innerHTML = '<i class="fas fa-bolt"></i> Trial ' + left + '/' + TRIAL_LIMIT;
   }
 }
+
 function canUseTrial() { return trialState.unlocked || trialState.count < TRIAL_LIMIT; }
 function consumeTrial() {
   if (trialState.unlocked) return;
@@ -136,7 +129,7 @@ function consumeTrial() {
 }
 
 /* ===========================================
-   🎉 PARTICLES
+   🎉 PARTICLES & TOAST
    =========================================== */
 (function spawnParticles() {
   const wrap = document.getElementById('particles');
@@ -150,17 +143,11 @@ function consumeTrial() {
     p.style.animationDuration = (8 + Math.random() * 12) + 's';
     p.style.animationDelay = (-Math.random() * 15) + 's';
     p.style.opacity = 0.15 + Math.random() * 0.4;
-    if (Math.random() > 0.6) {
-      p.style.background = '#22d3ee';
-      p.style.boxShadow = '0 0 10px #22d3ee';
-    }
+    if (Math.random() > 0.6) { p.style.background = '#22d3ee'; p.style.boxShadow = '0 0 10px #22d3ee'; }
     wrap.appendChild(p);
   }
 })();
 
-/* ===========================================
-   TOAST
-   =========================================== */
 const toastEl = document.getElementById('toast');
 function showToast(msg) {
   toastEl.textContent = msg;
@@ -170,14 +157,10 @@ function showToast(msg) {
 }
 
 /* ===========================================
-   STEP 1: Kirim Magic Link (am-send2)
+   STEP 1 & 2: MAGIC LINK (FITUR ATAS)
    =========================================== */
 document.getElementById('amSendMagicBtn').onclick = async function() {
-  if (!canUseTrial()) {
-    showToast('Trial habis! Beli kode unlimited dulu.');
-    renderTrial();
-    return;
-  }
+  if (!canUseTrial()) { showToast('Trial habis! Masukkan Kode Owner di bawah.'); renderTrial(); return; }
   const email = document.getElementById('amEmail').value.trim();
   if (!email) { showToast('Masukkan email!'); return; }
 
@@ -191,11 +174,7 @@ document.getElementById('amSendMagicBtn').onclick = async function() {
 
   try {
     const data = await apiGet(EP.send(email));
-    const ok = data && (
-      data.status === true || data.success === true || data.ok === true ||
-      (typeof data.message === 'string' && /success|sent|ok/i.test(data.message)) ||
-      (typeof data.raw === 'string' && /success|sent/i.test(data.raw))
-    );
+    const ok = data && (data.status === true || data.success === true || data.ok === true || (typeof data.message === 'string' && /success|sent|ok/i.test(data.message)) || (typeof data.raw === 'string' && /success|sent/i.test(data.raw)));
 
     if (ok) {
       box.innerHTML = '<div style="color:#22c55e;">✅ Magic link terkirim ke <b>' + email + '</b>. Cek inbox/spam.</div>';
@@ -207,21 +186,15 @@ document.getElementById('amSendMagicBtn').onclick = async function() {
       const msg = (data && (data.message || data.error || data.raw)) || 'Gagal mengirim';
       box.innerHTML = '<div style="color:#ef4444;">' + String(msg) + '</div>';
     }
-  } catch (e) {
-    box.innerHTML = '<div style="color:#ef4444;">Error: ' + e.message + '</div>';
-  }
+  } catch (e) { box.innerHTML = '<div style="color:#ef4444;">Error: ' + e.message + '</div>'; }
 
   this.disabled = false;
   this.innerHTML = original;
 };
 
-/* ===========================================
-   STEP 2: Verifikasi & Aktivasi (am-verif2)
-   =========================================== */
 document.getElementById('amVerifyBtn').onclick = async function() {
   const rawLink = document.getElementById('amRawLink').value.trim();
-  const email = document.getElementById('amSendResult').dataset.email
-              || document.getElementById('amEmail').value.trim();
+  const email = document.getElementById('amSendResult').dataset.email || document.getElementById('amEmail').value.trim();
 
   if (!rawLink) { showToast('Tempelkan magic link!'); return; }
   if (!email)   { showToast('Email tidak ditemukan, kirim ulang.'); return; }
@@ -236,11 +209,7 @@ document.getElementById('amVerifyBtn').onclick = async function() {
 
   try {
     const data = await apiGet(EP.verify(email, rawLink));
-    const ok = data && (
-      data.status === true || data.success === true || data.ok === true ||
-      (typeof data.message === 'string' && /success|premium|activated|ok/i.test(data.message)) ||
-      (typeof data.raw === 'string' && /success|premium/i.test(data.raw))
-    );
+    const ok = data && (data.status === true || data.success === true || data.ok === true || (typeof data.message === 'string' && /success|premium|activated|ok/i.test(data.message)) || (typeof data.raw === 'string' && /success|premium/i.test(data.raw)));
 
     if (ok) {
       document.getElementById('step1').style.display = 'none';
@@ -252,6 +221,181 @@ document.getElementById('amVerifyBtn').onclick = async function() {
       const msg = (data && (data.message || data.error || data.raw)) || 'Verifikasi gagal';
       box.innerHTML = '<div style="color:#ef4444;">❌ ' + String(msg) + '</div>';
     }
+  } catch (e) { box.innerHTML = '<div style="color:#ef4444;">Error: ' + e.message + '</div>'; }
+
+  this.disabled = false;
+  this.innerHTML = original;
+};
+
+/* ===========================================
+   🔓 UNLOCK KODE (FITUR ATAS)
+   =========================================== */
+document.getElementById('unlockBtn').onclick = async function() {
+  const code = document.getElementById('unlockCode').value.trim();
+  const res  = document.getElementById('unlockResult');
+  res.style.display = 'block';
+
+  if (!code) { res.innerHTML = '<div style="color:#fbbf24;">Masukkan kode akses terlebih dahulu.</div>'; return; }
+
+  this.disabled = true;
+  this.innerHTML = '<i class="fas fa-spinner spin"></i> Cek Kode...';
+  res.innerHTML = '<div style="color:#fbbf24;"><i class="fas fa-spinner spin"></i> Memvalidasi kode...</div>';
+
+  const v = await validatePremium(code, 'premium_magic');
+
+  if (v.valid) {
+    trialState.unlocked = true;
+    saveState(trialState);
+    res.innerHTML = '<div style="color:#22c55e;">🎉 Kode valid! Unlimited access fitur atas terbuka.</div>';
+    showToast('Unlimited access aktif!');
+    setTimeout(() => {
+      renderTrial();
+      document.getElementById('step1').style.display = 'block';
+      document.getElementById('step2').style.display = 'none';
+      document.getElementById('unlockCode').value = '';
+      res.style.display = 'none';
+    }, 900);
+  } else {
+    res.innerHTML = '<div style="color:#ef4444;">❌ ' + (v.error || 'Kode salah/expired.') + '</div>';
+    showToast('Kode tidak valid');
+  }
+
+  this.disabled = false;
+  this.innerHTML = '<i class="fas fa-unlock"></i> Aktivasi Kode';
+};
+document.getElementById('unlockCode').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('unlockBtn').click();
+});
+
+/* ===========================================
+   📦 BULK GENERATOR (FITUR BAWAH - LOCKED)
+   =========================================== */
+const bulkInput  = document.getElementById('bulkCount');
+const bulkBtn    = document.getElementById('bulkBtn');
+const bulkResult = document.getElementById('bulkResult');
+
+function renderBulkResult(data) {
+  if (!data) return '<div style="color:#ef4444;">Kosong</div>';
+  const list = Array.isArray(data) ? data : (data.results || data.emails || data.data || data.items || null);
+  if (list) {
+    const rows = list.map((it, i) => {
+      if (typeof it === 'string') return `${i + 1}. ${it}`;
+      const em = it.email || it.mail || it.address || it.user || JSON.stringify(it);
+      const st = it.status || it.state || '';
+      return `${i + 1}. ${em}${st ? ' — ' + st : ''}`;
+    }).join('\n');
+    return `<div style="text-align:left; white-space:pre-wrap; font-family:monospace; font-size:11px;">${rows}</div>`;
+  }
+  const raw = data.raw || JSON.stringify(data, null, 2);
+  return `<div style="text-align:left; white-space:pre-wrap; font-family:monospace; font-size:11px; max-height:300px; overflow-y:auto;">${String(raw).slice(0, 4000)}</div>`;
+}
+
+function fmtRemain(ms) {
+  if (!ms || ms <= 0) return '';
+  const d = Math.floor(ms / 86400000);
+  const h = Math.floor((ms % 86400000) / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  if (d > 0) return `${d}h ${h}j left`;
+  if (h > 0) return `${h}j ${m}m left`;
+  return `${m}m left`;
+}
+
+// Fungsi untuk mengunci/membuka UI Bulk
+function updateBulkUI(unlocked) {
+  isBulkUnlocked = unlocked;
+  if (unlocked) {
+    bulkBtn.disabled = false;
+    bulkBtn.style.opacity = 1;
+    bulkBtn.style.cursor = 'pointer';
+    bulkBtn.style.background = 'linear-gradient(135deg,#3b82f6,#1d4ed8)';
+    bulkBtn.innerHTML = '<i class="fas fa-boxes-stacked"></i> Generate Bulk';
+    bulkInput.disabled = false;
+    document.getElementById('bulkTokenBox').style.display = 'none';
+  } else {
+    bulkBtn.disabled = true;
+    bulkBtn.style.opacity = 0.5;
+    bulkBtn.style.cursor = 'not-allowed';
+    bulkBtn.style.background = '#333';
+    bulkBtn.innerHTML = '<i class="fas fa-lock"></i> Fitur Terkunci (Butuh Key)';
+    bulkInput.disabled = true;
+    document.getElementById('bulkTokenBox').style.display = 'block';
+  }
+}
+
+// Cek Key Bulk saat halaman dimuat
+(async function initBulkCheck() {
+  const tok = getPremiumToken();
+  if (tok) {
+    const v = await validatePremium(tok, 'premium_bulk');
+    if (v.valid) {
+      updateBulkUI(true);
+      document.getElementById('bulkTokenInput').value = tok;
+      showToast('Bulk Key aktif ' + fmtRemain(v.remainingMs));
+    } else {
+      setPremiumToken(''); // hapus token jika expired/salah
+      updateBulkUI(false);
+    }
+  } else {
+    updateBulkUI(false);
+  }
+})();
+
+// Apply Key Bulk
+document.getElementById('bulkTokenApply').onclick = async function() {
+  const inp = document.getElementById('bulkTokenInput');
+  const tok = inp.value.trim();
+  if (!tok) { showToast('Key kosong'); return; }
+
+  this.disabled = true;
+  this.innerHTML = '<i class="fas fa-spinner spin"></i> Cek Key...';
+
+  setPremiumToken(tok);
+  const v = await validatePremium(tok, 'premium_bulk');
+  
+  if (v.valid) {
+    const remain = fmtRemain(v.remainingMs);
+    updateBulkUI(true);
+    showToast('Bulk Key valid — ' + remain);
+  } else {
+    setPremiumToken('');
+    updateBulkUI(false);
+    showToast(v.error || 'Key tidak valid');
+  }
+
+  this.disabled = false;
+  this.innerHTML = '<i class="fas fa-unlock"></i> Terapkan Key Bulk';
+};
+
+// Proses Bulk
+bulkBtn.onclick = async function() {
+  if (!isBulkUnlocked) { showToast('Masukkan Key Bulk dulu!'); return; }
+  
+  const n = parseInt(bulkInput.value, 10);
+  if (!Number.isFinite(n) || n < 1 || n > 50) { showToast('Jumlah 1–50'); return; }
+
+  this.disabled = true;
+  const original = this.innerHTML;
+  this.innerHTML = '<i class="fas fa-spinner spin"></i> Generate...';
+  bulkResult.style.display = 'block';
+  bulkResult.innerHTML = '<div><i class="fas fa-spinner spin"></i> Meminta ' + n + ' akun...</div>';
+
+  try {
+    const out = await bulkGenerate(n);
+    const remain = fmtRemain(out.remainingMs);
+    bulkResult.innerHTML = '<div style="color:#22c55e; margin-bottom:8px;">✅ Bulk selesai (count=' + n + ') ' + remain + '</div>' + renderBulkResult(out.payload);
+  } catch (e) {
+    bulkResult.innerHTML = '<div style="color:#ef4444;">Error: ' + e.message + '</div>';
+    if (/expired|revoked|invalid|token/i.test(e.message)) {
+      setPremiumToken('');
+      updateBulkUI(false);
+    }
+  }
+
+  this.disabled = false;
+  this.innerHTML = original;
+};
+
+renderTrial();  }
   } catch (e) {
     box.innerHTML = '<div style="color:#ef4444;">Error: ' + e.message + '</div>';
   }
