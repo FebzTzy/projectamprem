@@ -12,7 +12,7 @@ const EP = {
 /* ===========================================
    🔑 PREMIUM PROXY (NETLIFY)
    =========================================== */
-const PREMIUM_API = 'https://febztzy-amprem.netlify.app/.netlify/functions';
+const PREMIUM_API = 'https://projectamprem-febztzy.netlify.app/.netlify/functions';
 const TOKEN_STORE = 'am_premium_token_v1';
 const TRIAL_LIMIT = 3;
 const STORAGE_KEY = 'am_trial_state_v1';
