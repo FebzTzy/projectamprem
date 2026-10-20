@@ -2,7 +2,7 @@
    ⚙️ API KYZOROHAN
    =========================================== */
 const API_BASE = 'https://kyzorohan.web.id/api';
-const API_KEY  = 'rohana305c3bb4ca9e44c';
+const API_KEY  = '';
 
 const EP = {
   send  : (email)       => `${API_BASE}/am-send2?key=${API_KEY}&email=${encodeURIComponent(email)}`,
