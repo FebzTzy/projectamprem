@@ -1,12 +1,10 @@
-/* ===========================================
-   ⚙️ API KYZOROHAN
-   =========================================== */
-const API_BASE = 'https://kyzorohan.web.id/api';
-const API_KEY  = '';
+// Alarm deteksi error
+window.onerror = function(msg, url, line) {
+    alert("❌ ERROR JS (Baris " + line + "):\n" + msg + "\n\nCoba hapus semua isi script.js dan paste ulang kode ini dari awal.");
+    return false;
+};
 
-const EP = {
-  send  : (email)       => `${API_BASE}/am-send2?key=${API_KEY}&email=${encodeURIComponent(email)}`,
-  verify/* ===========================================
+/* ===========================================
    ⚙️ API KYZOROHAN
    =========================================== */
 const API_BASE = 'https://kyzorohan.web.id/api';
@@ -20,13 +18,13 @@ const EP = {
 /* ===========================================
    🔑 PREMIUM PROXY (NETLIFY)
    =========================================== */
-// ⚠️ PASTIKAN URL INI SUDAH DIGANTI KE DOMAIN NETLIFY BARU LO ⚠️
-const PREMIUM_API = 'https://febztzy-amprem.netlify.app/.netlify/functions';
+// ⚠️ GANTI URL INI KE DOMAIN NETLIFY BARU LO ⚠️
+const PREMIUM_API = 'https://projectamprem-febztzy.netlify.app/.netlify/functions'; 
 const TOKEN_STORE = 'am_premium_token_v1';
 const TRIAL_LIMIT = 3;
 const STORAGE_KEY = 'am_trial_state_v1';
 const WA_NUMBER   = '6289679137206';
-const WA_MESSAGE  = 'Halo kakk, saya ingin beli Kode Unlimited / Bulk Key.';
+const WA_MESSAGE  = 'Halo kak, saya ingin beli Kode Unlimited / Bulk Key.';
 
 // Variabel Global
 let isBulkUnlocked = false;
@@ -45,7 +43,6 @@ async function validatePremium(token, requiredPlan) {
       body: JSON.stringify({ token })
     });
     const data = await r.json();
-    // Cek apakah plan-nya sesuai (premium_magic atau premium_bulk)
     if (data.valid && requiredPlan && data.plan !== requiredPlan) {
       return { valid: false, error: 'Key ini bukan untuk fitur ini.' };
     }
@@ -362,7 +359,7 @@ document.getElementById('bulkTokenApply').onclick = async function() {
     if (v.valid) {
       updateBulkUI(true);
       showToast('Bulk Key valid — ' + fmtRemain(v.remainingMs));
-      inp.value = ''; // bersihkan input
+      inp.value = ''; 
     } else {
       setPremiumToken('');
       updateBulkUI(false);
@@ -408,106 +405,7 @@ bulkBtn.onclick = async function() {
    INIT
    =========================================== */
 trialState = loadState();
-renderTrial();
-
-  if (v.valid) {
-    trialState.unlocked = true;
-    saveState(trialState);
-    res.innerHTML = '<div style="color:#22c55e;">🎉 Kode valid! Unlimited access fitur atas terbuka.</div>';
-    showToast('Unlimited access aktif!');
-    setTimeout(() => {
-      renderTrial();
-      document.getElementById('step1').style.display = 'block';
-      document.getElementById('step2').style.display = 'none';
-      document.getElementById('unlockCode').value = '';
-      res.style.display = 'none';
-    }, 900);
-  } else {
-    res.innerHTML = '<div style="color:#ef4444;">❌ ' + (v.error || 'Kode salah/expired.') + '</div>';
-    showToast('Kode tidak valid');
-  }
-
-  this.disabled = false;
-  this.innerHTML = '<i class="fas fa-unlock"></i> Aktivasi Kode';
-};
-document.getElementById('unlockCode').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('unlockBtn').click();
-});
-
-/* ===========================================
-   📦 BULK GENERATOR (FITUR BAWAH - LOCKED)
-   =========================================== */
-const bulkInput  = document.getElementById('bulkCount');
-const bulkBtn    = document.getElementById('bulkBtn');
-const bulkResult = document.getElementById('bulkResult');
-
-function renderBulkResult(data) {
-  if (!data) return '<div style="color:#ef4444;">Kosong</div>';
-  const list = Array.isArray(data) ? data : (data.results || data.emails || data.data || data.items || null);
-  if (list) {
-    const rows = list.map((it, i) => {
-      if (typeof it === 'string') return `${i + 1}. ${it}`;
-      const em = it.email || it.mail || it.address || it.user || JSON.stringify(it);
-      const st = it.status || it.state || '';
-      return `${i + 1}. ${em}${st ? ' — ' + st : ''}`;
-    }).join('\n');
-    return `<div style="text-align:left; white-space:pre-wrap; font-family:monospace; font-size:11px;">${rows}</div>`;
-  }
-  const raw = data.raw || JSON.stringify(data, null, 2);
-  return `<div style="text-align:left; white-space:pre-wrap; font-family:monospace; font-size:11px; max-height:300px; overflow-y:auto;">${String(raw).slice(0, 4000)}</div>`;
-}
-
-function fmtRemain(ms) {
-  if (!ms || ms <= 0) return '';
-  const d = Math.floor(ms / 86400000);
-  const h = Math.floor((ms % 86400000) / 3600000);
-  const m = Math.floor((ms % 3600000) / 60000);
-  if (d > 0) return `${d}h ${h}j left`;
-  if (h > 0) return `${h}j ${m}m left`;
-  return `${m}m left`;
-}
-
-function updateBulkUI(unlocked) {
-  isBulkUnlocked = unlocked;
-  if (unlocked) {
-    bulkBtn.disabled = false;
-    bulkBtn.style.opacity = 1;
-    bulkBtn.style.cursor = 'pointer';
-    bulkBtn.style.background = 'linear-gradient(135deg,#3b82f6,#1d4ed8)';
-    bulkBtn.innerHTML = '<i class="fas fa-boxes-stacked"></i> Generate Bulk';
-    bulkInput.disabled = false;
-    document.getElementById('bulkTokenBox').style.display = 'none';
-  } else {
-    bulkBtn.disabled = true;
-    bulkBtn.style.opacity = 0.5;
-    bulkBtn.style.cursor = 'not-allowed';
-    bulkBtn.style.background = '#333';
-    bulkBtn.innerHTML = '<i class="fas fa-lock"></i> Fitur Terkunci (Butuh Key)';
-    bulkInput.disabled = true;
-    document.getElementById('bulkTokenBox').style.display = 'block';
-  }
-}
-
-(async function initBulkCheck() {
-  const tok = getPremiumToken();
-  if (tok) {
-    const v = await validatePremium(tok, 'premium_bulk');
-    if (v.valid) {
-      updateBulkUI(true);
-      document.getElementById('bulkTokenInput').value = tok;
-      showToast('Bulk Key aktif ' + fmtRemain(v.remainingMs));
-    } else {
-      setPremiumToken(''); 
-      updateBulkUI(false);
-    }
-  } else {
-    updateBulkUI(false);
-  }
-})();
-
-document.getElementById('bulkTokenApply').onclick = async function() {
-  const inp = document.getElementById('bulkTokenInput');
-  const tok = inp.value.trim();
+renderTrial();.value.trim();
   if (!tok) { showToast('Key kosong'); return; }
 
   this.disabled = true;
